@@ -1,5 +1,4 @@
 open FSharpPlus
-open FSharpPlus.Lens
 
 type Cell =
    | Covered of Cell
@@ -31,12 +30,15 @@ type Minefield =
       match this with
       | Setup _ -> "Setup"
       | Playing m ->
-         let group = m |> Map.toSeq |> groupBy (fun ((x, _), _) -> x)
+         let rows =
+            m
+            |> Map.toSeq
+            |> groupBy (fun ((row, _), _) -> row)
 
          seq {
-            for (_, x) in group do
-               for (_, y) in x do
-                  yield $"{y}"
+            for (_, row) in rows do
+               for (_, cell) in row do
+                  yield $"{cell}"
 
                yield "\n"
          }
@@ -56,11 +58,11 @@ type Minefield =
          let withBombs =
             let setBomb x =
                match x with
-               | Some _ -> Bomb |> Some 
+               | Some _ -> Bomb |> Some
                | None -> None
 
-            let folder state pos = state |> Map.change pos setBomb
-            (init, bombsPos) ||> fold folder
+            let change state pos = state |> Map.change pos setBomb
+            (init, bombsPos) ||> fold change
 
          Playing(withBombs)
       | _ -> this
@@ -76,6 +78,6 @@ let minefield2 =
    |> Map.ofSeq
    |> Playing
 
-let minefield = Setup(Width 3, Height 2, BombsPos [(Row 1, Column 1)])
+let minefield = Setup(Width 3, Height 2, BombsPos [ (Row 1, Column 1) ])
 
 printfn $"{minefield.Start}"
